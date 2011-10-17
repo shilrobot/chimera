@@ -1,0 +1,45 @@
+<level>
+  <width>320</width>
+  <height>240</height>
+  <tilesAbove set="tiles">
+    <tile tx="32" ty="16" x="48" y="192"/>
+    <tile tx="0" ty="48" x="16" y="192"/>
+    <tile tx="0" ty="32" x="32" y="208"/>
+    <tile tx="0" ty="32" x="48" y="208"/>
+    <tile tx="0" ty="32" x="64" y="208"/>
+    <tile tx="0" ty="32" x="80" y="208"/>
+    <tile tx="0" ty="32" x="96" y="208"/>
+    <tile tx="0" ty="32" x="16" y="208"/>
+    <tile tx="0" ty="32" x="0" y="208"/>
+    <tile tx="0" ty="32" x="0" y="224"/>
+    <tile tx="0" ty="32" x="16" y="224"/>
+    <tile tx="0" ty="32" x="32" y="224"/>
+    <tile tx="0" ty="32" x="48" y="224"/>
+    <tile tx="0" ty="32" x="64" y="224"/>
+    <tile tx="0" ty="32" x="80" y="224"/>
+    <tile tx="0" ty="32" x="96" y="224"/>
+    <tile tx="0" ty="32" x="112" y="224"/>
+    <tile tx="0" ty="32" x="128" y="224"/>
+    <tile tx="0" ty="32" x="128" y="208"/>
+    <tile tx="0" ty="32" x="112" y="208"/>
+    <tile tx="0" ty="0" x="0" y="176"/>
+    <tile tx="0" ty="0" x="16" y="176"/>
+    <tile tx="0" ty="0" x="32" y="176"/>
+    <tile tx="0" ty="0" x="48" y="176"/>
+    <tile tx="0" ty="0" x="144" y="176"/>
+    <tile tx="0" ty="0" x="128" y="176"/>
+    <tile tx="0" ty="0" x="112" y="176"/>
+    <tile tx="0" ty="0" x="96" y="176"/>
+    <tile tx="0" ty="0" x="80" y="176"/>
+    <tile tx="0" ty="0" x="64" y="176"/>
+    <tile tx="32" ty="48" x="80" y="160"/>
+    <tile tx="32" ty="48" x="128" y="160"/>
+    <tile tx="32" ty="48" x="48" y="160"/>
+    <tile tx="0" ty="32" x="160" y="176"/>
+    <tile tx="0" ty="32" x="160" y="192"/>
+    <tile tx="0" ty="32" x="160" y="208"/>
+    <tile tx="0" ty="32" x="160" y="224"/>
+    <tile tx="0" ty="32" x="144" y="224"/>
+    <tile tx="0" ty="32" x="144" y="208"/>
+  </tilesAbove>
+</level>
