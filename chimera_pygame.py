@@ -1088,7 +1088,7 @@ class PuzzleWorld(World):
 		self._won = False
 		self.hud_tex = get_tex('hud.png')
 		self.help_tex = get_tex('help.png')
-		self.label = Label('vera.ttf', 10*SCALE)
+		self.label = Label('Vera.ttf', 10*SCALE)
 		
 		#self.map = Map(self,TEST_MAP)
 		self.map = Map(self, self.levels[0])
