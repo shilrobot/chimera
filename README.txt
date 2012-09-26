@@ -7,33 +7,35 @@ CODE + ART: Scott Hilbert: http://www.shilbert.com
 MUSIC: Kevin MacLeod: http://http://www.incompetech.com/
 SOUND FX: Generated with BFXR: http://www.bfxr.net/
 
+REQUIREMENTS
+============
+Python 2.6+ (not 3.x): http://www.python.org/download/
+Pygame: http://www.pygame.org/download.shtml
+PyOpenGL: http://pyopengl.sourceforge.net/documentation/installation.html
+
+Tested combinations:
+Windows 7 x64, Python 2.7.3, pygame 1.9.1release, PyOpenGL 3.0.2b2
+Ubuntu 10.04 x64, Python 2.6.5, pygame 1.9.1release, PyOpenGL 3.0.0
+
 HOW TO RUN
 ==========
 
 WINDOWS:
 
-1) Just run 'chimera.exe'.
+1) Install python, pygame and PyOpenGL
 
-If you get an error about not being able to load avbin.dll
-(hopefully you don't!) you can set 'music=0' in the config file
-to play without music.
+2) Run chimera.py
 
 LINUX:
 
-1) Ensure that you have the following programs and libraries installed:
+1) Ensure that you have the required libraries.
 
-     python 2.6+ (but not 3.x)
-     pyglet 1.1.2 or 1.1.4
-     avbin
-     pyopenal (recommended; otherwise pyglet uses ALSA for sound which is
-               best described as 'crashy')
-    
    Most recent Debian and Ubuntu machines come with python 2.6+.
    You can check what version of python you have by running 'python -V'.
    
    To install the rest:
     
-     $ sudo apt-get install python-pyglet python-openal libavbin0
+     $ sudo apt-get install python-pygame python-opengl
      
    The install procedure will vary for other linux distributions.
 
@@ -41,11 +43,13 @@ LINUX:
 
 MAC:
 
-1) Download and install the pyglet DMG from here:
+1) Install pygame and pyopengl. (OS X comes with Python)
 
-     http://www.pyglet.org/download.html
+2) You may be able to just do 'python chimera.py' at a terminal.
+   
+   If not, try this... (not tested since the switch to Pygame)
 
-2) If you are on Snow Leopard, from a bash shell in the same directory
+   If you are on Snow Leopard, from a bash shell in the same directory
    as this README.txt file:
 
      $ VERSIONER_PYTHON_PREFER_32_BIT=yes python chimera.py

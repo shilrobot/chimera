@@ -11,11 +11,11 @@ setup(
 	license="BSD",
 	
 	# make a windows subsystem executable (no console)
-	windows=['chimera_pygame.py'],
+	windows=['chimera.py'],
 	
 	# pull in necessary data files
 	data_files= [
-		'chimera_pygame.py',
+		'chimera.py',
 		'setup.py',
 		'Vera.ttf',
 		'README.txt',
