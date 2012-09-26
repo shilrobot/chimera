@@ -6,6 +6,7 @@ AUTHOR
 CODE + ART: Scott Hilbert: http://www.shilbert.com
 MUSIC: Kevin MacLeod: http://http://www.incompetech.com/
 SOUND FX: Generated with BFXR: http://www.bfxr.net/
+FONT: Bitstream Vera by Bitstream, Inc.: http://www-old.gnome.org/fonts/
 
 REQUIREMENTS
 ============
