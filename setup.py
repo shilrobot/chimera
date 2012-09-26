@@ -11,14 +11,15 @@ setup(
 	license="BSD",
 	
 	# make a windows subsystem executable (no console)
-	windows=['chimera.py'],
+	windows=['chimera_pygame.py'],
 	
 	# pull in necessary data files
 	data_files= [
-		'chimera.py',
+		'chimera_pygame.py',
 		'setup.py',
+		'Vera.ttf',
 		'README.txt',
-		'avbin/avbin.dll',
+		#'avbin/avbin.dll',
 		'config.ini',
 		('images', glob.glob('images/*.png')),
 		('levels', glob.glob('levels/*.*')),
@@ -27,7 +28,8 @@ setup(
 	],
 	
 	options = {'py2exe': dict(
-		excludes=['_ssl', 'pyreadline', 'difflib', 'doctest', 'locale', 'optparse', 'pickle', 'calendar','pdb','doctest','unittest','inspect','popen'],
+		excludes=['_ssl', 'pyreadline', 'difflib', 'doctest', 'locale', 'optparse', 'pickle', 'calendar','pdb','doctest','unittest','inspect','popen','Tkinter'],
+		packages=['OpenGL','OpenGL.arrays','pygame'],
 		#compressed=True,
 		bundle_files=1
 	)},

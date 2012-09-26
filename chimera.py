@@ -1,9 +1,5 @@
-import pyglet
-# the "go fast" button
-pyglet.options['debug_gl'] = False
-from pyglet.gl import *
-from pyglet.window import key
-from pyglet.text import Label
+import pygame
+from OpenGL.GL import *
 import math
 import time 
 import os
@@ -11,22 +7,19 @@ from xml.etree.ElementTree import parse
 import random
 import ConfigParser
 
-def get_root():
-	from pyglet.resource import get_script_home
-	root = get_script_home()
-	if root == '':
-		root = '.'
-	return root
+# py2exe hack
+from ctypes import util
+try:
+    from OpenGL.platform import win32
+except AttributeError:
+    pass
 	
 def vfs_path(p):
-	return os.path.join(FS_ROOT, p)
-		
-FS_ROOT = get_root()
+	return p		
 	
 SCALE = 3
 ENABLE_SFX = 1
 ENABLE_MUSIC = 1
-
 
 cfg = ConfigParser.ConfigParser()
 try:
@@ -41,15 +34,33 @@ except:
 	import traceback as tb
 	tb.print_exc()
 
+pygame.mixer.pre_init(44100, -16, 2, 2048)
+pygame.init()
+pygame.display.set_icon(pygame.image.load(vfs_path('images/icon.png')))
+pygame.display.set_mode((320*SCALE,240*SCALE), pygame.OPENGL|pygame.DOUBLEBUF)
+pygame.display.set_caption('Chimera Chimera')
+	
 if ENABLE_MUSIC:
-	music = pyglet.media.load(vfs_path('music/just_nasty.ogg'),streaming=True)
-	player = pyglet.media.Player()
-	player.queue(music)
-	player.eos_action = player.EOS_LOOP
-	player.play()
+	pygame.mixer.music.load(vfs_path('music/just_nasty.ogg'))
+	pygame.mixer.music.play(-1)
 
-window = pyglet.window.Window(320*SCALE, 240*SCALE, caption='Chimera Chimera')
 TEXTURES = {}
+
+class KeyList(object):
+	pass
+	
+key = KeyList()
+key.SPACE  = pygame.K_SPACE
+key.LEFT   = pygame.K_LEFT
+key.RIGHT  = pygame.K_RIGHT
+key.UP     = pygame.K_UP
+key.DOWN   = pygame.K_DOWN
+key.ENTER  = pygame.K_RETURN
+key.D      = pygame.K_d
+key.R      = pygame.K_r
+key.ESCAPE = pygame.K_ESCAPE
+key.W      = pygame.K_w
+key.F1     = pygame.K_F1
 
 class DummySound(object):
 	def play(self):
@@ -57,7 +68,7 @@ class DummySound(object):
 
 def get_sfx(name):
 	if ENABLE_SFX:
-		return pyglet.media.load(vfs_path('sfx/'+name+'.wav'), streaming=False)
+		return pygame.mixer.Sound(vfs_path('sfx/'+name+'.wav'))
 	else:
 		return DummySound()
 
@@ -69,16 +80,90 @@ SFX_FLAP = get_sfx('flap')
 SFX_WIN = get_sfx('win')
 SFX_DIG = get_sfx('dig')
 
-def get_tex(name):
-	if name not in TEXTURES:
-		tex = pyglet.image.load(vfs_path('images/'+name)).get_texture()
-		TEXTURES[name] = tex
-		glBindTexture(tex.target, tex.id)
+def texture_from_surface(surf):
+		rgba_data = pygame.image.tostring(surface, "RGBA", 1)
+		
+		self.id = glGenTextures(1)
+		self.target = GL_TEXTURE_2D
+		self.width = surface.get_width()
+		self.height = surface.get_height()
+		glBindTexture(self.target, self.id)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.width, self.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba_data )
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-		glBindTexture(tex.target, 0)
-	return TEXTURES[name]
+		glBindTexture(self.target, 0)
+	
 
+class Texture(object):
+	def __init__(self, surface=None):
+		self.id = glGenTextures(1)
+		self.target = GL_TEXTURE_2D
+		
+		glBindTexture(self.target, self.id)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+		glBindTexture(self.target, 0)
+		
+		if surface is not None:
+			self.write(surface)
+		
+	def write(self, surface):
+		rgba_data = pygame.image.tostring(surface, "RGBA", 1)
+		self.width = surface.get_width()
+		self.height = surface.get_height()
+		glBindTexture(self.target, self.id)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.width, self.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba_data)
+		glBindTexture(self.target, 0)				
+		
+	def destroy(self):
+		glDeleteTextures([self.id])
+		self.id = 0
+
+def get_tex(name):
+	if name not in TEXTURES:
+		surface = pygame.image.load(vfs_path('images/'+name))
+		TEXTURES[name] = Texture(surface)
+		
+	return TEXTURES[name]
+	
+def next_pot(x):
+	pot = 1
+	while pot < x:
+		pot *= 2
+	return pot
+	
+class Label(object):
+	def __init__(self, filename, size):
+		self.font = pygame.font.Font(filename, size)
+		self._text = None
+		self._tex = None
+		
+	def set_text(self, text):
+		if text == self._text:
+			return
+		if self._tex is None:
+			self._tex = Texture()
+			self._last_w = 1
+			self._last_h = 1
+		self._text = text
+		surf = self.font.render(self._text, True, (255,255,255))
+		self.text_width = surf.get_width()
+		self.text_height = surf.get_height()
+		# only grow the texture
+		tex_w = max(self._last_w, next_pot(surf.get_width()))
+		tex_h = max(self._last_h, next_pot(surf.get_height()))
+		pot_surf = pygame.Surface((tex_w, tex_h), pygame.SRCALPHA)
+		pot_surf.fill((0,0,0,0))
+		pot_surf.blit(surf, (0,0))
+		self._tex.write(pot_surf)
+				
+	def get_texture(self):
+		return self._tex
+		
+	def destroy(self):
+		self._tex.destroy()
+		self._text = None
+	
 TILEMAP_TEX = get_tex('tiles.png')
 
 TILE_EMPTY = "TILE_EMPTY"
@@ -168,7 +253,7 @@ def lerp(x,a,b):
 def lerp_clamp(x,a,b):
 	return clamp(lerp(x,a,b),a,b)
 		
-def draw_subrect(tex, x, y, w=-1, h=-1, sx=0, sy=0, flip_x=False, begin=True):
+def draw_subrect(tex, x, y, w=-1, h=-1, sx=0, sy=0, flip_x=False, begin=True, scale=True):
 	if begin:
 		glEnable(tex.target)
 		glBindTexture(tex.target, tex.id)
@@ -184,14 +269,17 @@ def draw_subrect(tex, x, y, w=-1, h=-1, sx=0, sy=0, flip_x=False, begin=True):
 	if flip_x:
 		u0,u1 = u1,u0
 			
-	x0 = round(x*SCALE)-0.1
-	x1 = x0+(w*SCALE)
-	y0 = round(y*SCALE)-0.1
-	y1 = y0+(h*SCALE)
-	if w == 320 and h == 240:
-		print x0, x1, y0, y1
-		print u0, u1, v0, v1
-	#print u0,v0,u1,v1,x0,y0,x1,y1
+	if scale:
+		x0 = round(x*SCALE)-0.1
+		x1 = x0+(w*SCALE)
+		y0 = round(y*SCALE)-0.1
+		y1 = y0+(h*SCALE)
+	else:
+		x0 = round(x)-0.1
+		x1 = x0+w
+		y0 = round(y)-0.1
+		y1 = y0+h
+		
 	glTexCoord2f(u0,v0)
 	glVertex2f(x0,y0)
 	glTexCoord2f(u1,v0)
@@ -1009,10 +1097,7 @@ class PuzzleWorld(World):
 		self._won = False
 		self.hud_tex = get_tex('hud.png')
 		self.help_tex = get_tex('help.png')
-		self.label = Label('MOLEBEAR!', font_name='Arial, Helvetica, Sans', font_size=8*SCALE,
-							anchor_x='center',
-							x = 160*SCALE,
-							y = (240-40)*SCALE)
+		self.label = Label('Vera.ttf', 10*SCALE)
 		
 		#self.map = Map(self,TEST_MAP)
 		self.map = Map(self, self.levels[0])
@@ -1039,7 +1124,7 @@ class PuzzleWorld(World):
 				self.show_help = False
 		else:
 			if engine.key_pressed(key.ESCAPE):
-				pyglet.app.exit()
+				engine.exit()
 				return
 			if engine.key_pressed(key.F1):
 				self.show_help = True
@@ -1072,25 +1157,12 @@ class PuzzleWorld(World):
 			draw_species([self.player.species[0]], 178,24, True)
 			draw_subrect(self.hud_tex, 0, 0)
 			
-			glMatrixMode(GL_PROJECTION)
-			glPushMatrix()
-			glLoadIdentity()
-			glOrtho(0, 320*SCALE, 0, 240*SCALE, -1, 1)
-			
-			labelX = self.label.x
-			labelY = self.label.y
-			self.label.x += 2
-			self.label.y -= 2
-			self.label.color = (0,0,0,255)
-			self.label.draw()
-			
-			self.label.x = labelX
-			self.label.y = labelY
-			self.label.color = (255,255,255,255)
-			self.label.draw()
-			
-			glPopMatrix()
-			glMatrixMode(GL_MODELVIEW)
+			label_x = 160*SCALE - self.label.text_width*0.5
+			label_y = 37*SCALE - self.label.text_height*0.5
+			glColor4f(0,0,0,1)
+			draw_subrect(self.label.get_texture(), label_x+SCALE, label_y+SCALE, scale=False)
+			glColor4f(1,1,1,1)
+			draw_subrect(self.label.get_texture(), label_x, label_y, scale=False)
 		
 	def win(self):
 		if not self._won:
@@ -1104,13 +1176,14 @@ class PuzzleWorld(World):
 			
 	def become_inactive(self):
 		self.map.discard_list()
+		self.label.destroy()
 		
 	def update_species(self):
 		a = self.player.species[0]
 		b = self.player.species[1]
 		for (k,v) in SPECIES_NAMES.iteritems():
 			if k in [(a,b), (b,a)]:
-				self.label.text = v + "!"
+				self.label.set_text(v + "!")
 				break
 
 class WinWorld(World):
@@ -1122,7 +1195,7 @@ class WinWorld(World):
 		
 	def update(self,delta):
 		if engine.key_pressed(key.ESCAPE):
-			pyglet.app.exit()
+			engine.exit()
 			return
 				
 		update_bg(delta)	
@@ -1137,30 +1210,12 @@ class Engine(object):
 	def __init__(self):
 		self._world = World()
 		self.next_world = None
-		self._updated = False
-		self._checkedKeys = [
-			key.SPACE,
-			key.LEFT,
-			key.RIGHT,
-			key.UP,
-			key.DOWN,
-			key.ENTER,
-			key.D,
-			key.R,
-			key.ESCAPE,
-			key.W,
-			key.F1
-		]
-		self._lastFrameKeys = {}
-		self._thisFrameKeys = {}
+		self._lastFrameKeys = []
+		self._thisFrameKeys = []
+		self.done = False
 		
 	def draw(self):
-		if not self._updated:
-			self.update(1/60.0)
-			self._updated = True
-			
 		t = time.clock()
-		#glClear(GL_COLOR_BUFFER_BIT)
 		
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
@@ -1192,10 +1247,7 @@ class Engine(object):
 			self.next_world = None
 		
 		self._lastFrameKeys = self._thisFrameKeys
-		self._thisFrameKeys = {}
-		for k in self._checkedKeys:
-			self._thisFrameKeys[k] = _keys[k]
-			
+		self._thisFrameKeys = pygame.key.get_pressed()			
 			
 		self._world.update(delta)
 		#print 'U: %.3f'%( (time.clock()-t)*1000)
@@ -1206,27 +1258,36 @@ class Engine(object):
 	def key_pressed(self, k):
 		return self._thisFrameKeys[k] and not self._lastFrameKeys[k]
 		
+	def exit(self):
+		self.done = True
 					
 engine = Engine()
 engine.next_world = PuzzleWorld(['intro','0','1','2','3','4','5'])
-			
-@window.event
-def on_draw():
-	engine.draw()
+
+def main():
 	
-def update(delta):
-	engine.update(delta)
+	last_time = time.time()
+	while not engine.done:
 	
-# Keep ESC from killing the game always
-@window.event
-def on_key_press(symbol, modifiers):
-    if symbol == pyglet.window.key.ESCAPE:
-        return pyglet.event.EVENT_HANDLED
+		while True:
+			err = glGetError()
+			if err != GL_NO_ERROR:
+				print 'OpenGL error: %s' % err
+			else:
+				break
+				
+		events = pygame.event.get()
+		for event in events:
+			if event.type == pygame.QUIT:
+				engine.exit()
+				
+		now = time.time()
+		if now < last_time:
+			last_time = now
+		engine.update(now-last_time)
+		last_time = now
 		
-window.push_handlers(on_key_press)
-	
-_keys = key.KeyStateHandler()
-window.push_handlers(_keys)
-	
-pyglet.clock.schedule(update)
-pyglet.app.run()
+		engine.draw()
+		pygame.display.flip()
+		
+main()
