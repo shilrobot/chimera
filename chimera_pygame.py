@@ -1201,16 +1201,11 @@ class Engine(object):
 	def __init__(self):
 		self._world = World()
 		self.next_world = None
-		self._updated = False
 		self._lastFrameKeys = []
 		self._thisFrameKeys = []
 		self.done = False
 		
 	def draw(self):
-		if not self._updated:
-			self.update(1/60.0)
-			self._updated = True
-			
 		t = time.clock()
 		
 		glMatrixMode(GL_PROJECTION)
@@ -1262,7 +1257,7 @@ engine.next_world = PuzzleWorld(['intro','0','1','2','3','4','5'])
 
 def main():
 	
-	last_time = time.clock()
+	last_time = time.time()
 	while not engine.done:
 	
 		while True:
@@ -1277,7 +1272,7 @@ def main():
 			if event.type == pygame.QUIT:
 				engine.exit()
 				
-		now = time.clock()
+		now = time.time()
 		if now < last_time:
 			last_time = now
 		engine.update(now-last_time)
