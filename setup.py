@@ -15,11 +15,10 @@ setup(
 	
 	# pull in necessary data files
 	data_files= [
-		'chimera.py',
-		'setup.py',
+		#'chimera.py',
+		#'setup.py',
 		'Vera.ttf',
 		'README.txt',
-		#'avbin/avbin.dll',
 		'config.ini',
 		('images', glob.glob('images/*.png')),
 		('levels', glob.glob('levels/*.*')),
@@ -28,7 +27,10 @@ setup(
 	],
 	
 	options = {'py2exe': dict(
-		excludes=['_ssl', 'pyreadline', 'difflib', 'doctest', 'locale', 'optparse', 'pickle', 'calendar','pdb','doctest','unittest','inspect','popen','Tkinter'],
+		excludes=['_ssl', 'pyreadline', 'difflib', 'doctest', 'locale', 'optparse', 'pickle', 'calendar','pdb','doctest','unittest','inspect','popen','Tkinter',
+		'distutils', 'pydoc_data', 'compiler', 'setuptools', 'multiprocesing', 'email',
+		'curses','numpy'],
+		dll_excludes=['w9xpopen.exe'],
 		packages=['OpenGL','OpenGL.arrays','pygame'],
 		#compressed=True,
 		bundle_files=1
