@@ -14,7 +14,7 @@ Pygame: http://www.pygame.org/download.shtml
 PyOpenGL: http://pyopengl.sourceforge.net/documentation/installation.html
 
 Tested combinations:
-Windows 7 x64, Python 2.7.3, pygame 1.9.1release, PyOpenGL 3.0.2b2
+Windows 7 x64, Python 2.7.3 (32-bit), pygame 1.9.1release, PyOpenGL 3.0.2b2
 Ubuntu 10.04 x64, Python 2.6.5, pygame 1.9.1release, PyOpenGL 3.0.0
 
 HOW TO RUN
