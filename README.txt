@@ -73,7 +73,7 @@ ESC - Quit game entirely
 OTHER TIPS
 ============
 If you have a screen that is smaller than the default size (3x magnification, ie 960x720)
-you can modify the 'scale' value in graphics.ini to a smaller number, like 1 or 2.
+you can modify the 'scale' value in config.ini to a smaller number, like 1 or 2.
 This may also help remove graphics artifacts.
 
 LICENSE
