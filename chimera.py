@@ -924,12 +924,13 @@ class DirtSpray(GameObject):
 			self.particles.append(p)
 	def draw(self):
 		glDisable(GL_TEXTURE_2D)
-		glPointSize(SCALE)
+		glPointSize(SCALE * 3)
 		glBegin(GL_POINTS)
 		for p in self.particles:
 			glColor4f(p.r,p.g,p.b,1.0 -p.age/DROPLET_AGE)
 			glVertex2f(p.x*SCALE, p.y*SCALE);
 		glEnd()
+		glPointSize(SCALE)
 		glColor4f(1,1,1,1)
 		glEnable(GL_TEXTURE_2D)
 	
