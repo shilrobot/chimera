@@ -628,19 +628,17 @@ class Animal(GameObject):
 	
 		if self.can_dig() and engine.key_pressed(key.D):
 			m = self.world.map
-			tx,ty = m.to_tile_coords(*self.get_dig_coords())
+			digX, digY = self.get_dig_coords()
+			tx,ty = m.to_tile_coords(digX, digY)
 			if m.valid_tile(tx,ty):
 				if m.get_tile(tx,ty) == TILE_DIRT:
 					m.set_tile(tx,ty,TILE_DIRT_HOLE)
 					m.discard_list() # redraw map to DL
 					SFX_DIG.play()
-					#print 'DIG OK'
+
+					self.world.dirt_particles.burst(digX, digY)
 				else:
-					#print 'DIG FAIL'
 					pass
-					#c = Crosshair(self.world)
-					#c.x,c.y = self.get_dig_coords()
-					#self.world.add(c)
 	
 		# Move in the X direction
 		xdir = 0
@@ -690,20 +688,20 @@ class Animal(GameObject):
 		if not self.on_ground:
 			apply_drag = False
 			apply_gravity = False
-			apply_bouyancy = False
+			apply_buoyancy = False
 			
 			if in_water:
 				if self.can_swim():
 					apply_drag = True
 				else:
 					apply_drag = True
-					apply_bouyancy = True
+					apply_buoyancy = True
 					apply_gravity = True
 			else:
 				apply_gravity = True
 				
-			if apply_bouyancy:
-				# bouyancy
+			if apply_buoyancy:
+				# buoyancy
 				self.vy -= (self.y - waterline)*100*delta
 				
 			if apply_gravity:
@@ -830,7 +828,6 @@ class Animal(GameObject):
 		return self.collider_at(self.x, self.y)
 		
 	def draw(self):
-		#draw_subrect(self.tex, self.x-8, self.y-16, 16,16, 4*16,4*16,flip_x = not self.face_right)
 		flash = False
 		if self.cooling_down:
 			flash = self.flicker_counter < 2
@@ -898,6 +895,44 @@ class Particle:
 		self.g = 0
 		self.b = 0
 		self.age = 0
+
+DIRTLET_AGE = 2.0
+
+class DirtSpray(GameObject):
+	def __init__(self, world):
+		super(DirtSpray, self).__init__(world)
+		self.particles = []
+		self.priority = -1
+	def update(self, delta):
+		for p in self.particles:
+			p.age += delta
+			p.vy += 900 * delta
+			p.y += p.vy * delta
+			p.x += p.vx * delta
+		self.particles = [p for p in self.particles if p.age < DIRTLET_AGE]
+	def burst(self, x, y):
+		for n in range(15):
+			p = Particle()
+			p.x = x + random.uniform(-TILE_SIZE * 0.5, TILE_SIZE * 0.5)
+			p.y = y + random.uniform(-TILE_SIZE * 0.5, TILE_SIZE * 0.5)
+			p.vy = random.uniform(-10,-350)
+			p.vx = random.uniform(-50,50)
+			p.age = 0
+			p.r,p.g,p.b = 139/255.0,69/255.0,19/255.0
+			if random.random() < 0.25:
+				p.r,p.g,p.b = 222/255.0, 184/255.0, 135/255.0
+			self.particles.append(p)
+	def draw(self):
+		glDisable(GL_TEXTURE_2D)
+		glPointSize(SCALE * 3)
+		glBegin(GL_POINTS)
+		for p in self.particles:
+			glColor4f(p.r,p.g,p.b,1.0 -p.age/DIRTLET_AGE)
+			glVertex2f(p.x*SCALE, p.y*SCALE);
+		glEnd()
+		glPointSize(SCALE)
+		glColor4f(1,1,1,1)
+		glEnable(GL_TEXTURE_2D)
 	
 class Confetti(GameObject):
 	def __init__(self,world,infinite=False):
@@ -936,7 +971,6 @@ class Confetti(GameObject):
 					p.y = 0
 		
 	def draw(self):
-		#glBindTexture(self.tex.target, self.tex.id)
 		glDisable(GL_TEXTURE_2D)
 		glPointSize(SCALE)
 		glBegin(GL_POINTS)
@@ -970,7 +1004,6 @@ class WaterParticles(GameObject):
 		self.particles = [p for p in self.particles if p.age < DROPLET_AGE]
 		
 	def draw(self):
-		#glBindTexture(self.tex.target, self.tex.id)
 		glDisable(GL_TEXTURE_2D)
 		glPointSize(SCALE)
 		glBegin(GL_POINTS)
@@ -1014,7 +1047,6 @@ class Bubbles(GameObject):
 		return p.x + 5*math.sin(p.age*5)
 		
 	def draw(self):
-		#glBindTexture(self.tex.target, self.tex.id)
 		glDisable(GL_TEXTURE_2D)
 		glPointSize(SCALE*2)
 		glBegin(GL_POINTS)
@@ -1091,7 +1123,9 @@ class PuzzleWorld(World):
 		self.levels = levels
 		self.wild_animals = []
 		self.water_particles = WaterParticles(self)
+		self.dirt_particles = DirtSpray(self)
 		self.add(self.water_particles)
+		self.add(self.dirt_particles)
 		self.bubbles = Bubbles(self)
 		self.add(self.bubbles)
 		self._won = False
@@ -1099,7 +1133,6 @@ class PuzzleWorld(World):
 		self.help_tex = get_tex('help.png')
 		self.label = Label('Vera.ttf', 10*SCALE)
 		
-		#self.map = Map(self,TEST_MAP)
 		self.map = Map(self, self.levels[0])
 		self.add(self.map)
 		
@@ -1113,8 +1146,6 @@ class PuzzleWorld(World):
 		self.win_timer = 0
 		
 		self.show_help = False
-		
-		#self.add(Confetti(self))
 		
 	def update(self, delta):
 		update_bg(delta)
@@ -1250,7 +1281,6 @@ class Engine(object):
 		self._thisFrameKeys = pygame.key.get_pressed()			
 			
 		self._world.update(delta)
-		#print 'U: %.3f'%( (time.clock()-t)*1000)
 		
 	def key_down(self, k):
 		return self._thisFrameKeys[k]
