@@ -634,13 +634,8 @@ class Animal(GameObject):
 					m.set_tile(tx,ty,TILE_DIRT_HOLE)
 					m.discard_list() # redraw map to DL
 					SFX_DIG.play()
-					#print 'DIG OK'
 				else:
-					#print 'DIG FAIL'
 					pass
-					#c = Crosshair(self.world)
-					#c.x,c.y = self.get_dig_coords()
-					#self.world.add(c)
 	
 		# Move in the X direction
 		xdir = 0
@@ -703,7 +698,7 @@ class Animal(GameObject):
 				apply_gravity = True
 				
 			if apply_bouyancy:
-				# bouyancy
+				# buoyancy
 				self.vy -= (self.y - waterline)*100*delta
 				
 			if apply_gravity:
@@ -830,7 +825,6 @@ class Animal(GameObject):
 		return self.collider_at(self.x, self.y)
 		
 	def draw(self):
-		#draw_subrect(self.tex, self.x-8, self.y-16, 16,16, 4*16,4*16,flip_x = not self.face_right)
 		flash = False
 		if self.cooling_down:
 			flash = self.flicker_counter < 2
@@ -936,7 +930,6 @@ class Confetti(GameObject):
 					p.y = 0
 		
 	def draw(self):
-		#glBindTexture(self.tex.target, self.tex.id)
 		glDisable(GL_TEXTURE_2D)
 		glPointSize(SCALE)
 		glBegin(GL_POINTS)
@@ -970,7 +963,6 @@ class WaterParticles(GameObject):
 		self.particles = [p for p in self.particles if p.age < DROPLET_AGE]
 		
 	def draw(self):
-		#glBindTexture(self.tex.target, self.tex.id)
 		glDisable(GL_TEXTURE_2D)
 		glPointSize(SCALE)
 		glBegin(GL_POINTS)
@@ -1014,7 +1006,6 @@ class Bubbles(GameObject):
 		return p.x + 5*math.sin(p.age*5)
 		
 	def draw(self):
-		#glBindTexture(self.tex.target, self.tex.id)
 		glDisable(GL_TEXTURE_2D)
 		glPointSize(SCALE*2)
 		glBegin(GL_POINTS)
@@ -1099,7 +1090,6 @@ class PuzzleWorld(World):
 		self.help_tex = get_tex('help.png')
 		self.label = Label('Vera.ttf', 10*SCALE)
 		
-		#self.map = Map(self,TEST_MAP)
 		self.map = Map(self, self.levels[0])
 		self.add(self.map)
 		
@@ -1113,8 +1103,6 @@ class PuzzleWorld(World):
 		self.win_timer = 0
 		
 		self.show_help = False
-		
-		#self.add(Confetti(self))
 		
 	def update(self, delta):
 		update_bg(delta)
@@ -1250,7 +1238,6 @@ class Engine(object):
 		self._thisFrameKeys = pygame.key.get_pressed()			
 			
 		self._world.update(delta)
-		#print 'U: %.3f'%( (time.clock()-t)*1000)
 		
 	def key_down(self, k):
 		return self._thisFrameKeys[k]
