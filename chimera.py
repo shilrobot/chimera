@@ -688,19 +688,19 @@ class Animal(GameObject):
 		if not self.on_ground:
 			apply_drag = False
 			apply_gravity = False
-			apply_bouyancy = False
+			apply_buoyancy = False
 			
 			if in_water:
 				if self.can_swim():
 					apply_drag = True
 				else:
 					apply_drag = True
-					apply_bouyancy = True
+					apply_buoyancy = True
 					apply_gravity = True
 			else:
 				apply_gravity = True
 				
-			if apply_bouyancy:
+			if apply_buoyancy:
 				# buoyancy
 				self.vy -= (self.y - waterline)*100*delta
 				
