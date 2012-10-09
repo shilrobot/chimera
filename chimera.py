@@ -927,7 +927,7 @@ class DirtSpray(GameObject):
 		glPointSize(SCALE * 3)
 		glBegin(GL_POINTS)
 		for p in self.particles:
-			glColor4f(p.r,p.g,p.b,1.0 -p.age/DROPLET_AGE)
+			glColor4f(p.r,p.g,p.b,1.0 -p.age/DIRTLET_AGE)
 			glVertex2f(p.x*SCALE, p.y*SCALE);
 		glEnd()
 		glPointSize(SCALE)
