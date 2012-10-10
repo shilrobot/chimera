@@ -1221,23 +1221,34 @@ class EngineConfig(object):
 
 
 class Engine(object):
-    def __init__(self, cfg):
+    def __init__(self, cfg, title="Engine", icon_path=None):
         self._world = None
         self.next_world = None
         self._lastFrameKeys = None
         self._thisFrameKeys = None
-        self._cfg = cfg
+        self._bgm_path = None
+        self.config = cfg
 
         if cfg.enable_music or cfg.enable_sfx:
             pygame.mixer.pre_init(44100, -16, 2, 2048)
         pygame.init()
-        pygame.display.set_icon(pygame.image.load('images/icon.png'))
+        if icon_path is not None:
+            pygame.display.set_icon(pygame.image.load(icon_path))
         pygame.display.set_mode((320 * SCALE, 240 * SCALE), pygame.OPENGL | pygame.DOUBLEBUF)
-        pygame.display.set_caption('Chimera Chimera')
+        pygame.display.set_caption(title)
 
-        if cfg.enable_music:
-            pygame.mixer.music.load('music/just_nasty.ogg')
+    def play_bgm(self, path):
+        if not self.config.enable_music:
+            return
+        if path != self._bgm_path:
+            self._bgm_path = path
+            pygame.mixer.music.load(path)
             pygame.mixer.music.play(-1)
+
+    def stop_bgm(self):
+        if not self.config.enable_music:
+            return
+        pygame.mixer.music.stop()
 
     def draw(self):
         glMatrixMode(GL_PROJECTION)
@@ -1317,12 +1328,13 @@ class Engine(object):
 if __name__ == '__main__':
     config = EngineConfig('config.ini')
     SCALE = config.scale
-    engine = Engine(config)
+    engine = Engine(config, title="Chimera Chimera", icon_path="images/icon.png")
     sfx = Sounds()
     sfx.load()
     textures = Textures()
     textures.load()
     engine.next_world = PuzzleWorld(['intro', '0', '1', '2', '3', '4', '5'])
+    engine.play_bgm('music/just_nasty.ogg')
     engine.run()
 
 
