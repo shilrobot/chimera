@@ -15,38 +15,9 @@ except AttributeError:
     pass
 
 
-SCALE = 3
-ENABLE_SFX = 1
-ENABLE_MUSIC = 1
-
-cfg = ConfigParser.ConfigParser()
-try:
-    cfg.read('config.ini')
-    SCALE = cfg.getint('graphics', 'scale')
-    if SCALE < 1:
-        SCALE = 1
-    ENABLE_SFX = cfg.getboolean('audio', 'sfx')
-    ENABLE_MUSIC = cfg.getboolean('audio', 'music')
-except:
-    print 'Failed to read config.ini'
-    import traceback as tb
-    tb.print_exc()
-
-if ENABLE_MUSIC or ENABLE_SFX:
-    pygame.mixer.pre_init(44100, -16, 2, 2048)
-pygame.init()
-pygame.display.set_icon(pygame.image.load('images/icon.png'))
-pygame.display.set_mode((320 * SCALE, 240 * SCALE), pygame.OPENGL | pygame.DOUBLEBUF)
-pygame.display.set_caption('Chimera Chimera')
-
-if ENABLE_MUSIC:
-    pygame.mixer.music.load('music/just_nasty.ogg')
-    pygame.mixer.music.play(-1)
-
-
 class Sound(object):
     def __init__(self, name):
-        if ENABLE_SFX:
+        if config.enable_sfx:
             self.sound = pygame.mixer.Sound('sfx/' + name + '.wav')
         else:
             self.sound = None
@@ -1229,12 +1200,44 @@ class WinWorld(World):
         super(WinWorld, self).draw()
 
 
+class EngineConfig(object):
+    def __init__(self, path):
+        self.scale = 3
+        self.enable_sfx = True
+        self.enable_music = True
+
+        try:
+            cfg = ConfigParser.ConfigParser()
+            cfg.read(path)
+            self.scale = cfg.getint('graphics','scale')
+            if self.scale < 1:
+                self.scale = 1
+            self.enable_sfx = cfg.getboolean('audio', 'sfx')
+            self.enable_music = cfg.getboolean('audio', 'music')
+        except:
+            print 'Failed to read config file: %s' % path
+            import traceback as tb
+            tb.print_exc()
+
+
 class Engine(object):
-    def __init__(self):
-        self._world = World()
+    def __init__(self, cfg):
+        self._world = None
         self.next_world = None
         self._lastFrameKeys = None
         self._thisFrameKeys = None
+        self._cfg = cfg
+
+        if cfg.enable_music or cfg.enable_sfx:
+            pygame.mixer.pre_init(44100, -16, 2, 2048)
+        pygame.init()
+        pygame.display.set_icon(pygame.image.load('images/icon.png'))
+        pygame.display.set_mode((320 * SCALE, 240 * SCALE), pygame.OPENGL | pygame.DOUBLEBUF)
+        pygame.display.set_caption('Chimera Chimera')
+
+        if cfg.enable_music:
+            pygame.mixer.music.load('music/just_nasty.ogg')
+            pygame.mixer.music.play(-1)
 
     def draw(self):
         glMatrixMode(GL_PROJECTION)
@@ -1253,7 +1256,8 @@ class Engine(object):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
-        self._world.draw()
+        if self._world is not None:
+            self._world.draw()
         pygame.display.flip()
 
     def update(self, delta):
@@ -1270,7 +1274,8 @@ class Engine(object):
             self._world.become_active()
             self.next_world = None
 
-        self._world.update(delta)
+        if self._world is not None:
+            self._world.update(delta)
 
     def key_down(self, k):
         return self._thisFrameKeys[k]
@@ -1310,10 +1315,14 @@ class Engine(object):
 
 
 if __name__ == '__main__':
+    config = EngineConfig('config.ini')
+    SCALE = config.scale
+    engine = Engine(config)
     sfx = Sounds()
     sfx.load()
     textures = Textures()
     textures.load()
-    engine = Engine()
     engine.next_world = PuzzleWorld(['intro', '0', '1', '2', '3', '4', '5'])
     engine.run()
+
+
