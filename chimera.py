@@ -1233,9 +1233,8 @@ class Engine(object):
     def __init__(self):
         self._world = World()
         self.next_world = None
-        self._lastFrameKeys = []
-        self._thisFrameKeys = []
-        self.done = False
+        self._lastFrameKeys = None
+        self._thisFrameKeys = None
 
     def draw(self):
         glMatrixMode(GL_PROJECTION)
@@ -1258,15 +1257,18 @@ class Engine(object):
         pygame.display.flip()
 
     def update(self, delta):
+        if self._thisFrameKeys is None:
+            self._lastFrameKeys = self._thisFrameKeys = pygame.key.get_pressed()
+        else:
+            self._lastFrameKeys = self._thisFrameKeys
+            self._thisFrameKeys = pygame.key.get_pressed()
+
         if self.next_world is not None:
             if self._world is not None:
                 self._world.become_inactive()
             self._world = self.next_world
             self._world.become_active()
             self.next_world = None
-
-        self._lastFrameKeys = self._thisFrameKeys
-        self._thisFrameKeys = pygame.key.get_pressed()
 
         self._world.update(delta)
 
