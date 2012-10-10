@@ -36,7 +36,8 @@ except:
     import traceback as tb
     tb.print_exc()
 
-pygame.mixer.pre_init(44100, -16, 2, 2048)
+if ENABLE_MUSIC or ENABLE_SFX:
+    pygame.mixer.pre_init(44100, -16, 2, 2048)
 pygame.init()
 pygame.display.set_icon(pygame.image.load(vfs_path('images/icon.png')))
 pygame.display.set_mode((320 * SCALE, 240 * SCALE), pygame.OPENGL | pygame.DOUBLEBUF)
