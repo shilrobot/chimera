@@ -72,6 +72,7 @@ class Texture(object):
         self.id = glGenTextures(1)
         self.target = GL_TEXTURE_2D
         self.width, self.height = 0, 0
+        self.readonly = False
 
         glBindTexture(self.target, self.id)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
@@ -84,8 +85,10 @@ class Texture(object):
             else:
                 surf = pygame.image.load('images/' + name_or_surface)
                 self.write(surf)
+                self.readonly = True
 
     def write(self, surface):
+        assert not self.readonly
         rgba_data = pygame.image.tostring(surface, "RGBA", 1)
         self.width = surface.get_width()
         self.height = surface.get_height()
@@ -1252,9 +1255,9 @@ class Engine(object):
         glLoadIdentity()
 
         self._world.draw()
+        pygame.display.flip()
 
     def update(self, delta):
-        delta = clamp(delta, 0, 0.1)
         if self.next_world is not None:
             if self._world is not None:
                 self._world.become_inactive()
@@ -1274,42 +1277,41 @@ class Engine(object):
         return self._thisFrameKeys[k] and not self._lastFrameKeys[k]
 
     def exit(self):
-        self.done = True
+        pygame.event.post(pygame.event.Event(pygame.QUIT))
 
-sfx = Sounds()
-sfx.load()
-textures = Textures()
-textures.load()
-engine = Engine()
-engine.next_world = PuzzleWorld(['intro', '0', '1', '2', '3', '4', '5'])
-
-
-def main():
-
-    last_time = time.time()
-    while not engine.done:
-
+    def run(self):
+        last_time = time.time()
         while True:
-            err = glGetError()
-            if err != GL_NO_ERROR:
-                print 'OpenGL error: %s' % err
-            else:
-                break
 
-        events = pygame.event.get()
-        for event in events:
-            if event.type == pygame.QUIT:
-                engine.exit()
+            # while True:
+            #     err = glGetError()
+            #     if err != GL_NO_ERROR:
+            #         print 'OpenGL error: %s' % err
+            #     else:
+            #         break
 
-        now = time.time()
-        if now < last_time:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    return
+
+            now = time.time()
+            if now < last_time:
+                last_time = now
+            delta = now - last_time
+            delta = clamp(delta, 0, 0.1)
             last_time = now
-        engine.update(now - last_time)
-        last_time = now
 
-        engine.draw()
-        pygame.display.flip()
+            self.update(delta)
+
+            self.draw()
 
 
 if __name__ == '__main__':
-    main()
+    sfx = Sounds()
+    sfx.load()
+    textures = Textures()
+    textures.load()
+    engine = Engine()
+    engine.next_world = PuzzleWorld(['intro', '0', '1', '2', '3', '4', '5'])
+    engine.run()
