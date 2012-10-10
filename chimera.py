@@ -67,11 +67,6 @@ key.W = pygame.K_w
 key.F1 = pygame.K_F1
 
 
-class DummySound(object):
-    def play(self):
-        pass
-
-
 class Sound(object):
     def __init__(self, name):
         if ENABLE_SFX:
