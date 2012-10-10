@@ -47,8 +47,6 @@ if ENABLE_MUSIC:
     pygame.mixer.music.load(vfs_path('music/just_nasty.ogg'))
     pygame.mixer.music.play(-1)
 
-TEXTURES = {}
-
 
 class KeyList(object):
     pass
@@ -81,9 +79,6 @@ class Sound(object):
 
 
 class Sounds(object):
-    def __init__(self):
-        pass
-
     def load(self):
         self.JUMP = Sound('jump')
         self.HIJUMP = Sound('hijump')
@@ -94,22 +89,8 @@ class Sounds(object):
         self.DIG = Sound('dig')
 
 
-def texture_from_surface(surf):
-    rgba_data = pygame.image.tostring(surface, "RGBA", 1)
-
-    self.id = glGenTextures(1)
-    self.target = GL_TEXTURE_2D
-    self.width = surface.get_width()
-    self.height = surface.get_height()
-    glBindTexture(self.target, self.id)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.width, self.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba_data)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-    glBindTexture(self.target, 0)
-
-
 class Texture(object):
-    def __init__(self, surface=None):
+    def __init__(self, name_or_surface=None):
         self.id = glGenTextures(1)
         self.target = GL_TEXTURE_2D
         self.width, self.height = 0, 0
@@ -119,8 +100,12 @@ class Texture(object):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
         glBindTexture(self.target, 0)
 
-        if surface is not None:
-            self.write(surface)
+        if name_or_surface is not None:
+            if name_or_surface is pygame.Surface:
+                self.write(name_or_surface)
+            else:
+                surf = pygame.image.load(vfs_path('images/' + name_or_surface))
+                self.write(surf)
 
     def write(self, surface):
         rgba_data = pygame.image.tostring(surface, "RGBA", 1)
@@ -135,12 +120,18 @@ class Texture(object):
         self.id = 0
 
 
-def get_tex(name):
-    if name not in TEXTURES:
-        surface = pygame.image.load(vfs_path('images/' + name))
-        TEXTURES[name] = Texture(surface)
-
-    return TEXTURES[name]
+class Textures(object):
+    def load(self):
+        self.TILEMAP = Texture('tiles.png')
+        self.ANIMALS = Texture('animals.png')
+        self.ANIMALS_FLASH = Texture('animals_flash.png')
+        self.WATERLINE_1 = Texture('waterline1.png')
+        self.WATERLINE_2 = Texture('waterline2.png')
+        self.CROSSHAIR = Texture('crosshair.png')
+        self.BACKGROUND = Texture('bg.png')
+        self.HUD = Texture('hud.png')
+        self.HELP = Texture('help.png')
+        self.WIN = Texture('win.png')
 
 
 def next_pot(x):
@@ -182,8 +173,6 @@ class Label(object):
         self._tex.destroy()
         self._text = None
 
-
-TILEMAP_TEX = get_tex('tiles.png')
 
 TILE_EMPTY = "TILE_EMPTY"
 TILE_DIRT = "TILE_DIRT"
@@ -474,10 +463,11 @@ class Map(GameObject):
             self.water_timer -= TILE_SIZE
 
     def draw(self):
+
         if self.displaylist is None:
             self.displaylist = glGenLists(1)
             glNewList(self.displaylist, GL_COMPILE)
-            glBindTexture(GL_TEXTURE_2D, TILEMAP_TEX.id)
+            glBindTexture(GL_TEXTURE_2D, textures.TILEMAP.id)
             glBegin(GL_QUADS)
             for y in range(self.height):
                 for x in range(self.width):
@@ -489,7 +479,7 @@ class Map(GameObject):
                     if self.is_water_surface(x, y):
                         continue
                     (tx, ty) = TILE_DICT[t]
-                    draw_subrect(TILEMAP_TEX,
+                    draw_subrect(textures.TILEMAP,
                                 x * TILE_SIZE, y * TILE_SIZE,
                                 TILE_SIZE, TILE_SIZE,
                                 tx * TILE_SIZE, ty * TILE_SIZE, begin=False)
@@ -498,18 +488,18 @@ class Map(GameObject):
         glCallList(self.displaylist)
 
         if self.world.won and self.exit_flash_counter < 2:
-            draw_subrect(TILEMAP_TEX, self.exit_x * TILE_SIZE,
+            draw_subrect(textures.TILEMAP, self.exit_x * TILE_SIZE,
                             self.exit_y * TILE_SIZE,
                             TILE_SIZE,
                             TILE_SIZE,
                             0, 5 * TILE_SIZE)
 
-        glBindTexture(GL_TEXTURE_2D, TILEMAP_TEX.id)
+        glBindTexture(GL_TEXTURE_2D, textures.TILEMAP.id)
         glBegin(GL_QUADS)
         for y in range(self.height):
             for x in range(self.width):
                 if self.is_water_surface(x, y):
-                    draw_subrect(TILEMAP_TEX,
+                    draw_subrect(textures.TILEMAP,
                                 x * TILE_SIZE, y * TILE_SIZE - 1,
                                 TILE_SIZE, TILE_SIZE + 1,
                                 (4 * TILE_SIZE) + round(self.water_timer), 1 * TILE_SIZE - 1, begin=False)
@@ -539,10 +529,6 @@ class Map(GameObject):
             self.displaylist = None
 
 
-ANIMALS_TEX = get_tex('animals.png')
-ANIMALS_TEX_FLASH = get_tex('animals_flash.png')
-
-
 def draw_species(species, x, y, face_right=True, flash=False):
     if len(species) == 1:
         src_x = SPECIES_IDX[species[0]]
@@ -553,7 +539,7 @@ def draw_species(species, x, y, face_right=True, flash=False):
         if src_y > src_x:
             src_x, src_y = src_y, src_x
 
-    draw_subrect(ANIMALS_TEX_FLASH if flash else ANIMALS_TEX, x - 8, y - 16, 16, 16, src_x * 16, src_y * 16, flip_x=(not face_right))
+    draw_subrect(textures.ANIMALS_FLASH if flash else textures.ANIMALS, x - 8, y - 16, 16, 16, src_x * 16, src_y * 16, flip_x=(not face_right))
 
 
 class WildAnimal(GameObject):
@@ -878,8 +864,7 @@ class Animal(GameObject):
 class Splash(GameObject):
     def __init__(self, world):
         super(Splash, self).__init__(world)
-        self.frames = [get_tex('waterline1.png'),
-                        get_tex('waterline2.png')]
+        self.frames = [textures.WATERLINE_1, textures.WATERLINE_2]
         self.t = 0
         self.frame = 0
 
@@ -896,12 +881,8 @@ class Splash(GameObject):
 
 
 class Crosshair(GameObject):
-    def __init__(self, world):
-        super(Crosshair, self).__init__(world)
-        self.tex = get_tex('crosshair.png')
-
     def draw(self):
-        draw_subrect(self.tex, self.x - 7, self.y - 7, 16, 16)
+        draw_subrect(textures.CROSSHAIR, self.x - 7, self.y - 7, 16, 16)
 
 
 class Particle:
@@ -1129,8 +1110,8 @@ class World(object):
     def become_inactive(self):
         pass
 
+
 bg_timer = 0
-BG_TEX = get_tex('bg.png')
 
 
 def update_bg(delta):
@@ -1145,7 +1126,7 @@ def draw_bg():
 
     for x in range(-2, 6):
         for y in range(-2, 5):
-            draw_subrect(BG_TEX, x * 62 + bg_timer, y * 62 + bg_timer * 0.5, 62, 62)
+            draw_subrect(textures.BACKGROUND, x * 62 + bg_timer, y * 62 + bg_timer * 0.5, 62, 62)
 
 
 class PuzzleWorld(World):
@@ -1162,8 +1143,6 @@ class PuzzleWorld(World):
         self.bubbles = Bubbles(self)
         self.add(self.bubbles)
         self._won = False
-        self.hud_tex = get_tex('hud.png')
-        self.help_tex = get_tex('help.png')
         self.label = Label('Vera.ttf', 10 * SCALE)
 
         self.map = Map(self, self.levels[0])
@@ -1211,13 +1190,13 @@ class PuzzleWorld(World):
         draw_bg()
 
         if self.show_help:
-            draw_subrect(self.help_tex, 0, 0)
+            draw_subrect(textures.HELP, 0, 0)
         else:
             super(PuzzleWorld, self).draw()
 
             draw_species([self.player.species[1]], 142, 24, True)
             draw_species([self.player.species[0]], 178, 24, True)
-            draw_subrect(self.hud_tex, 0, 0)
+            draw_subrect(textures.HUD, 0, 0)
 
             label_x = 160 * SCALE - self.label.text_width * 0.5
             label_y = 37 * SCALE - self.label.text_height * 0.5
@@ -1253,7 +1232,6 @@ class WinWorld(World):
     def __init__(self):
         super(WinWorld, self).__init__()
         self.confetti = Confetti(self, infinite=True)
-        self.win_tex = get_tex('win.png')
         self.add(self.confetti)
 
     def update(self, delta):
@@ -1266,7 +1244,7 @@ class WinWorld(World):
 
     def draw(self):
         draw_bg()
-        draw_subrect(self.win_tex, 0, 0)
+        draw_subrect(textures.WIN, 0, 0)
         super(WinWorld, self).draw()
 
 
@@ -1322,6 +1300,8 @@ class Engine(object):
 
 sfx = Sounds()
 sfx.load()
+textures = Textures()
+textures.load()
 engine = Engine()
 engine.next_world = PuzzleWorld(['intro', '0', '1', '2', '3', '4', '5'])
 
