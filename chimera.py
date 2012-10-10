@@ -44,24 +44,6 @@ if ENABLE_MUSIC:
     pygame.mixer.music.play(-1)
 
 
-class KeyList(object):
-    pass
-
-
-key = KeyList()
-key.SPACE = pygame.K_SPACE
-key.LEFT = pygame.K_LEFT
-key.RIGHT = pygame.K_RIGHT
-key.UP = pygame.K_UP
-key.DOWN = pygame.K_DOWN
-key.ENTER = pygame.K_RETURN
-key.D = pygame.K_d
-key.R = pygame.K_r
-key.ESCAPE = pygame.K_ESCAPE
-key.W = pygame.K_w
-key.F1 = pygame.K_F1
-
-
 class Sound(object):
     def __init__(self, name):
         if ENABLE_SFX:
@@ -619,20 +601,20 @@ class Animal(GameObject):
     def update(self, delta):
 
         # Update dig dir
-        if engine.key_down(key.LEFT):
+        if engine.key_down(pygame.K_LEFT):
             self.dig_dir_x = -1
             self.dig_dir_y = 0
-        elif engine.key_down(key.RIGHT):
+        elif engine.key_down(pygame.K_RIGHT):
             self.dig_dir_x = +1
             self.dig_dir_y = 0
-        elif engine.key_down(key.UP):
+        elif engine.key_down(pygame.K_UP):
             self.dig_dir_x = 0
             self.dig_dir_y = -1
-        elif engine.key_down(key.DOWN):
+        elif engine.key_down(pygame.K_DOWN):
             self.dig_dir_x = 0
             self.dig_dir_y = +1
 
-        if self.can_dig() and engine.key_pressed(key.D):
+        if self.can_dig() and engine.key_pressed(pygame.K_d):
             m = self.world.map
             digX, digY = self.get_dig_coords()
             tx, ty = m.to_tile_coords(digX, digY)
@@ -649,10 +631,10 @@ class Animal(GameObject):
 
         # Move in the X direction
         xdir = 0
-        if engine.key_down(key.LEFT):
+        if engine.key_down(pygame.K_LEFT):
             xdir -= 1
             self.face_right = False
-        if engine.key_down(key.RIGHT):
+        if engine.key_down(pygame.K_RIGHT):
             xdir += 1
             self.face_right = True
 
@@ -669,7 +651,7 @@ class Animal(GameObject):
                 self.world.bubbles.bubble(self.x + (6 if self.face_right else -6), self.y - 8)
 
         # Respond to "JUMP" key
-        if engine.key_pressed(key.SPACE):
+        if engine.key_pressed(pygame.K_SPACE):
             if (self.on_ground or in_water):
                 self.vy = (-220 if self.can_high_jump() else -150)
                 self.on_ground = False
@@ -684,10 +666,10 @@ class Animal(GameObject):
 
         if in_water and self.can_swim():
             swim_y = 0
-            if engine.key_down(key.UP):
+            if engine.key_down(pygame.K_UP):
                 swim_y -= 1
                 self.on_ground = False
-            elif engine.key_down(key.DOWN):
+            elif engine.key_down(pygame.K_DOWN):
                 swim_y += 1
             if swim_y != 0:
                 self.vy += swim_y * 600 * delta
@@ -1159,18 +1141,18 @@ class PuzzleWorld(World):
         update_bg(delta)
 
         if self.show_help:
-            if engine.key_pressed(key.F1) or engine.key_pressed(key.ESCAPE):
+            if engine.key_pressed(pygame.K_F1) or engine.key_pressed(pygame.K_ESCAPE):
                 self.show_help = False
         else:
-            if engine.key_pressed(key.ESCAPE):
+            if engine.key_pressed(pygame.K_ESCAPE):
                 engine.exit()
                 return
-            if engine.key_pressed(key.F1):
+            if engine.key_pressed(pygame.K_F1):
                 self.show_help = True
 
-            if engine.key_pressed(key.R):
+            if engine.key_pressed(pygame.K_r):
                 engine.next_world = PuzzleWorld(self.levels)
-            #if engine.key_pressed(key.W):
+            #if engine.key_pressed(pygame.K_w):
             #   self.win()
             super(PuzzleWorld, self).update(delta)
 
@@ -1231,7 +1213,7 @@ class WinWorld(World):
         self.add(self.confetti)
 
     def update(self, delta):
-        if engine.key_pressed(key.ESCAPE):
+        if engine.key_pressed(pygame.K_ESCAPE):
             engine.exit()
             return
 
