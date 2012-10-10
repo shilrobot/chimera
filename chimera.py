@@ -72,20 +72,30 @@ class DummySound(object):
         pass
 
 
-def get_sfx(name):
-    if ENABLE_SFX:
-        return pygame.mixer.Sound(vfs_path('sfx/' + name + '.wav'))
-    else:
-        return DummySound()
+class Sound(object):
+    def __init__(self, name):
+        if ENABLE_SFX:
+            self.sound = pygame.mixer.Sound(vfs_path('sfx/' + name + '.wav'))
+        else:
+            self.sound = None
+
+    def play(self):
+        if self.sound is not None:
+            self.sound.play()
 
 
-SFX_JUMP = get_sfx('jump')
-SFX_HIJUMP = get_sfx('hijump')
-SFX_MUTATE = get_sfx('mutate')
-SFX_SPLASH = get_sfx('splash')
-SFX_FLAP = get_sfx('flap')
-SFX_WIN = get_sfx('win')
-SFX_DIG = get_sfx('dig')
+class Sounds(object):
+    def __init__(self):
+        pass
+
+    def load(self):
+        self.JUMP = Sound('jump')
+        self.HIJUMP = Sound('hijump')
+        self.MUTATE = Sound('mutate')
+        self.SPLASH = Sound('splash')
+        self.FLAP = Sound('flap')
+        self.WIN = Sound('win')
+        self.DIG = Sound('dig')
 
 
 def texture_from_surface(surf):
@@ -106,6 +116,7 @@ class Texture(object):
     def __init__(self, surface=None):
         self.id = glGenTextures(1)
         self.target = GL_TEXTURE_2D
+        self.width, self.height = 0, 0
 
         glBindTexture(self.target, self.id)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
@@ -353,6 +364,7 @@ class Rect:
     def __repr__(self):
         return 'Rect(%s,%s,%s,%s)' % (self.x, self.y, self.w, self.h)
 
+
 EDGE_LEFT = "EDGE_LEFT"
 EDGE_RIGHT = "EDGE_RIGHT"
 EDGE_TOP = "EDGE_TOP"
@@ -473,58 +485,57 @@ class Map(GameObject):
             glBegin(GL_QUADS)
             for y in range(self.height):
                 for x in range(self.width):
-                    t = self._tiles[x+y*self.width]
+                    t = self._tiles[x + y * self.width]
                     if t == TILE_EMPTY:
                         continue
                     if t not in TILE_DICT:
                         continue
-                    if self.is_water_surface(x,y):
+                    if self.is_water_surface(x, y):
                         continue
-                    (tx,ty) = TILE_DICT[t]
+                    (tx, ty) = TILE_DICT[t]
                     draw_subrect(TILEMAP_TEX,
-                                x*TILE_SIZE, y*TILE_SIZE,
+                                x * TILE_SIZE, y * TILE_SIZE,
                                 TILE_SIZE, TILE_SIZE,
-                                tx*TILE_SIZE, ty*TILE_SIZE, begin=False)
+                                tx * TILE_SIZE, ty * TILE_SIZE, begin=False)
             glEnd()
             glEndList()
         glCallList(self.displaylist)
 
         if self.world.won and self.exit_flash_counter < 2:
-            draw_subrect(TILEMAP_TEX, self.exit_x*TILE_SIZE,
-                            self.exit_y*TILE_SIZE,
+            draw_subrect(TILEMAP_TEX, self.exit_x * TILE_SIZE,
+                            self.exit_y * TILE_SIZE,
                             TILE_SIZE,
                             TILE_SIZE,
-                            0, 5*TILE_SIZE)
-
+                            0, 5 * TILE_SIZE)
 
         glBindTexture(GL_TEXTURE_2D, TILEMAP_TEX.id)
         glBegin(GL_QUADS)
         for y in range(self.height):
             for x in range(self.width):
-                if self.is_water_surface(x,y):
+                if self.is_water_surface(x, y):
                     draw_subrect(TILEMAP_TEX,
-                                x*TILE_SIZE, y*TILE_SIZE-1,
-                                TILE_SIZE, TILE_SIZE+1,
-                                (4*TILE_SIZE) + round(self.water_timer), 1*TILE_SIZE-1, begin=False)
+                                x * TILE_SIZE, y * TILE_SIZE - 1,
+                                TILE_SIZE, TILE_SIZE + 1,
+                                (4 * TILE_SIZE) + round(self.water_timer), 1 * TILE_SIZE - 1, begin=False)
         glEnd()
 
-    def is_water_surface(self,x,y):
-        t = self.get_tile(x,y)
-        return ( t == TILE_WATER and self.get_tile(x,y-1,TILE_CONCRETE) not in [TILE_CONCRETE, TILE_DIRT, TILE_WATER])
+    def is_water_surface(self, x, y):
+        t = self.get_tile(x, y)
+        return (t == TILE_WATER and self.get_tile(x, y - 1, TILE_CONCRETE) not in [TILE_CONCRETE, TILE_DIRT, TILE_WATER])
 
-    def visit_tiles(self,rect):
-        minX = int(math.floor(float(rect.left)/TILE_SIZE))
-        minY = int(math.floor(float(rect.top)/TILE_SIZE))
-        maxX = int(math.floor(float(rect.right)/TILE_SIZE))
-        maxY = int(math.floor(float(rect.bottom)/TILE_SIZE))
-        for y in range(minY, maxY+1):
-            for x in range(minX, maxX+1):
-                yield (x,y)
+    def visit_tiles(self, rect):
+        minX = int(math.floor(float(rect.left) / TILE_SIZE))
+        minY = int(math.floor(float(rect.top) / TILE_SIZE))
+        maxX = int(math.floor(float(rect.right) / TILE_SIZE))
+        maxY = int(math.floor(float(rect.bottom) / TILE_SIZE))
+        for y in range(minY, maxY + 1):
+            for x in range(minX, maxX + 1):
+                yield (x, y)
 
-    def to_tile_coords(self,x,y):
-        tx = int(math.floor(x/TILE_SIZE))
-        ty = int(math.floor(y/TILE_SIZE))
-        return (tx,ty)
+    def to_tile_coords(self, x, y):
+        tx = int(math.floor(x / TILE_SIZE))
+        ty = int(math.floor(y / TILE_SIZE))
+        return (tx, ty)
 
     def discard_list(self):
         if self.displaylist is not None:
@@ -536,9 +547,7 @@ ANIMALS_TEX = get_tex('animals.png')
 ANIMALS_TEX_FLASH = get_tex('animals_flash.png')
 
 
-
-
-def draw_species(species,x,y,face_right=True,flash=False):
+def draw_species(species, x, y, face_right=True, flash=False):
     if len(species) == 1:
         src_x = SPECIES_IDX[species[0]]
         src_y = src_x
@@ -546,9 +555,9 @@ def draw_species(species,x,y,face_right=True,flash=False):
         src_x = SPECIES_IDX[species[0]]
         src_y = SPECIES_IDX[species[1]]
         if src_y > src_x:
-            src_x,src_y = src_y,src_x
+            src_x, src_y = src_y, src_x
 
-    draw_subrect(ANIMALS_TEX_FLASH if flash else ANIMALS_TEX, x-8, y-16, 16,16, src_x*16,src_y*16,flip_x = not face_right)
+    draw_subrect(ANIMALS_TEX_FLASH if flash else ANIMALS_TEX, x - 8, y - 16, 16, 16, src_x * 16, src_y * 16, flip_x=(not face_right))
 
 
 class WildAnimal(GameObject):
@@ -564,49 +573,49 @@ class WildAnimal(GameObject):
     def update(self, delta):
         speed = 30
         if self.face_right:
-            newx = self.x + speed*delta
+            newx = self.x + speed * delta
         else:
-            newx = self.x - speed*delta
+            newx = self.x - speed * delta
 
-        if not self.solid_at(self.x,self.y+0.1):
-            newy = self.y + 80*delta
+        if not self.solid_at(self.x, self.y + 0.1):
+            newy = self.y + 80 * delta
             for n in range(5):
-                if self._can_move_to(self.x,newy):
+                if self._can_move_to(self.x, newy):
                     self.y = newy
                     break
                 else:
-                    newy = (self.y + newy)*0.5
+                    newy = (self.y + newy) * 0.5
 
-        elif not self.solid_at(newx,self.y+2):
+        elif not self.solid_at(newx, self.y + 2):
             self.face_right = not self.face_right
         else:
-            if self._can_move_to(newx,self.y):
+            if self._can_move_to(newx, self.y):
                 self.x = newx
             else:
                 self.face_right = not self.face_right
 
-    def solid_at(self,x,y):
+    def solid_at(self, x, y):
         map = self.world.map
-        tx,ty = map.to_tile_coords(x,y)
-        if self.species == SPECIES_FISH and map.get_tile(tx,ty,TILE_CONCRETE) == TILE_WATER:
+        tx, ty = map.to_tile_coords(x, y)
+        if self.species == SPECIES_FISH and map.get_tile(tx, ty, TILE_CONCRETE) == TILE_WATER:
             return True
-        return self.species == SPECIES_EAGLE or map.get_tile(tx,ty,TILE_CONCRETE) in [TILE_CONCRETE, TILE_DIRT]
-
+        return self.species == SPECIES_EAGLE or map.get_tile(tx, ty, TILE_CONCRETE) in [TILE_CONCRETE, TILE_DIRT]
 
     def draw(self):
         draw_species([self.species], self.x, self.y, self.face_right)
 
-    def _can_move_to(self,x,y):
-        r = Rect(x-6, y-12,12,12)
+    def _can_move_to(self, x, y):
+        r = Rect(x - 6, y - 12, 12, 12)
         m = self.world.map
-        for (x,y) in m.visit_tiles(r):
-            if m.get_tile(x,y,TILE_CONCRETE) in [TILE_DIRT, TILE_CONCRETE]:
+        for (x, y) in m.visit_tiles(r):
+            if m.get_tile(x, y, TILE_CONCRETE) in [TILE_DIRT, TILE_CONCRETE]:
                 return False
         return True
 
     @property
     def collider(self):
-        return Rect(self.x-6,self.y-12,12,12)
+        return Rect(self.x - 6, self.y - 12, 12, 12)
+
 
 class Animal(GameObject):
     def __init__(self, world):
@@ -654,7 +663,7 @@ class Animal(GameObject):
                     m.set_tile(tx, ty, TILE_DIRT_HOLE)
                     # redraw map to display list
                     m.discard_list()
-                    SFX_DIG.play()
+                    sfx.DIG.play()
 
                     self.world.dirt_particles.burst(digX, digY)
                 else:
@@ -672,7 +681,7 @@ class Animal(GameObject):
         in_water, waterline = self._in_water()
 
         if in_water != self.was_in_water:
-            SFX_SPLASH.play()
+            sfx.SPLASH.play()
             self.world.water_particles.splash(self.x, self.y)
 
         if in_water and SPECIES_FISH in self.species:
@@ -687,13 +696,13 @@ class Animal(GameObject):
                 self.vy = (-220 if self.can_high_jump() else -150)
                 self.on_ground = False
                 if self.can_high_jump():
-                    SFX_HIJUMP.play()
+                    sfx.HIJUMP.play()
                 else:
-                    SFX_JUMP.play()
+                    sfx.JUMP.play()
             elif self.can_air_jump():
                 self.vy = -100
                 self.on_ground = False
-                SFX_FLAP.play()
+                sfx.FLAP.play()
 
         if in_water and self.can_swim():
             swim_y = 0
@@ -774,7 +783,7 @@ class Animal(GameObject):
                     self.cooling_down = True
                     self.cooldown_timer = 0.5
                     self.world.update_species()
-                    SFX_MUTATE.play()
+                    sfx.MUTATE.play()
                     break
         else:
             self.cooldown_timer -= delta
@@ -796,9 +805,9 @@ class Animal(GameObject):
             testy = lerp(mid, self.y, newy)
             if self._can_move_to(testx, testy):
                 bestT = mid
-                start, end = mid,end
+                start, end = mid, end
             else:
-                start, end = start,mid
+                start, end = start, mid
 
         self.x = lerp(bestT, self.x, newx)
         self.y = lerp(bestT, self.y, newy)
@@ -822,7 +831,7 @@ class Animal(GameObject):
             if m.get_tile(x, y, TILE_CONCRETE) is TILE_WATER:
 
                 while m.get_tile(x, y - 1, TILE_CONCRETE) is TILE_WATER:
-                    y -=1
+                    y -= 1
 
                 waterline = min(waterline, y * TILE_SIZE)
                 return True, waterline
@@ -870,16 +879,15 @@ class Animal(GameObject):
         return SPECIES_FISH in self.species
 
 
-
 class Splash(GameObject):
-    def __init__(self,world):
-        super(Splash,self).__init__(world)
+    def __init__(self, world):
+        super(Splash, self).__init__(world)
         self.frames = [get_tex('waterline1.png'),
                         get_tex('waterline2.png')]
         self.t = 0
         self.frame = 0
 
-    def update(self,delta):
+    def update(self, delta):
         self.t += delta
         if self.t >= 0.2:
             self.t = 0
@@ -888,15 +896,16 @@ class Splash(GameObject):
                 self.frame = 0
 
     def draw(self):
-        draw_subrect(self.frames[self.frame], self.x-8, self.y-8, 16,16)
+        draw_subrect(self.frames[self.frame], self.x - 8, self.y - 8, 16, 16)
+
 
 class Crosshair(GameObject):
-    def __init__(self,world):
-        super(Crosshair,self).__init__(world)
+    def __init__(self, world):
+        super(Crosshair, self).__init__(world)
         self.tex = get_tex('crosshair.png')
 
     def draw(self):
-        draw_subrect(self.tex, self.x-7, self.y-7, 16,16)
+        draw_subrect(self.tex, self.x - 7, self.y - 7, 16, 16)
 
 
 class Particle:
@@ -1224,7 +1233,7 @@ class PuzzleWorld(World):
     def win(self):
         if not self._won:
             self._won = True
-            SFX_WIN.play()
+            sfx.WIN.play()
             self.add(Confetti(self))
 
     @property
@@ -1315,6 +1324,8 @@ class Engine(object):
     def exit(self):
         self.done = True
 
+sfx = Sounds()
+sfx.load()
 engine = Engine()
 engine.next_world = PuzzleWorld(['intro', '0', '1', '2', '3', '4', '5'])
 
@@ -1346,4 +1357,5 @@ def main():
         pygame.display.flip()
 
 
-main()
+if __name__ == '__main__':
+    main()
