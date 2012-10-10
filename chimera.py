@@ -15,17 +15,13 @@ except AttributeError:
     pass
 
 
-def vfs_path(p):
-    return p
-
-
 SCALE = 3
 ENABLE_SFX = 1
 ENABLE_MUSIC = 1
 
 cfg = ConfigParser.ConfigParser()
 try:
-    cfg.read(vfs_path('config.ini'))
+    cfg.read('config.ini')
     SCALE = cfg.getint('graphics', 'scale')
     if SCALE < 1:
         SCALE = 1
@@ -39,12 +35,12 @@ except:
 if ENABLE_MUSIC or ENABLE_SFX:
     pygame.mixer.pre_init(44100, -16, 2, 2048)
 pygame.init()
-pygame.display.set_icon(pygame.image.load(vfs_path('images/icon.png')))
+pygame.display.set_icon(pygame.image.load('images/icon.png'))
 pygame.display.set_mode((320 * SCALE, 240 * SCALE), pygame.OPENGL | pygame.DOUBLEBUF)
 pygame.display.set_caption('Chimera Chimera')
 
 if ENABLE_MUSIC:
-    pygame.mixer.music.load(vfs_path('music/just_nasty.ogg'))
+    pygame.mixer.music.load('music/just_nasty.ogg')
     pygame.mixer.music.play(-1)
 
 
@@ -69,7 +65,7 @@ key.F1 = pygame.K_F1
 class Sound(object):
     def __init__(self, name):
         if ENABLE_SFX:
-            self.sound = pygame.mixer.Sound(vfs_path('sfx/' + name + '.wav'))
+            self.sound = pygame.mixer.Sound('sfx/' + name + '.wav')
         else:
             self.sound = None
 
@@ -104,7 +100,7 @@ class Texture(object):
             if name_or_surface is pygame.Surface:
                 self.write(name_or_surface)
             else:
-                surf = pygame.image.load(vfs_path('images/' + name_or_surface))
+                surf = pygame.image.load('images/' + name_or_surface)
                 self.write(surf)
 
     def write(self, surface):
@@ -393,7 +389,7 @@ class Map(GameObject):
         self._tiles = [TILE_EMPTY] * w * h
 
     def load(self, filename):
-        with open(vfs_path('levels/%s.oel' % filename), 'rt') as f:
+        with open('levels/%s.oel' % filename, 'rt') as f:
             xml = parse(f)
             w = int(xml.findtext('width')) / TILE_SIZE
             h = int(xml.findtext('height')) / TILE_SIZE
