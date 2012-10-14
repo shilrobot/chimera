@@ -17,7 +17,7 @@ except AttributeError:
 
 class Sound(object):
     def __init__(self, name):
-        if config.enable_sfx:
+        if engine.config.enable_sfx:
             self.sound = pygame.mixer.Sound('sfx/' + name + '.wav')
         else:
             self.sound = None
@@ -1050,9 +1050,7 @@ class World(object):
             self._gos = [go for go in self._gos if not go.killme]
 
     def draw(self):
-        sorted = self._gos[:]
-        sorted.sort(key=lambda go: go.priority)
-        for go in sorted:
+        for go in sorted(self._gos, key=lambda go: go.priority):
             if go.visible:
                 go.draw()
 
@@ -1209,11 +1207,17 @@ class EngineConfig(object):
         try:
             cfg = ConfigParser.ConfigParser()
             cfg.read(path)
-            self.scale = cfg.getint('graphics','scale')
-            if self.scale < 1:
-                self.scale = 1
-            self.enable_sfx = cfg.getboolean('audio', 'sfx')
-            self.enable_music = cfg.getboolean('audio', 'music')
+
+            if cfg.has_option('graphics', 'scale'):
+                self.scale = cfg.getint('graphics', 'scale')
+                if self.scale < 1:
+                    self.scale = 1
+
+            if cfg.has_option('audio', 'sfx'):
+                self.enable_sfx = cfg.getboolean('audio', 'sfx')
+
+            if cfg.has_option('audio', 'music'):
+                self.enable_music = cfg.getboolean('audio', 'music')
         except:
             print 'Failed to read config file: %s' % path
             import traceback as tb
@@ -1221,20 +1225,20 @@ class EngineConfig(object):
 
 
 class Engine(object):
-    def __init__(self, cfg, title="Engine", icon_path=None):
+    def __init__(self, config_path='config.ini', title="Engine", icon_path=None):
         self._world = None
         self.next_world = None
         self._lastFrameKeys = None
         self._thisFrameKeys = None
         self._bgm_path = None
-        self.config = cfg
+        self.config = EngineConfig(config_path)
 
-        if cfg.enable_music or cfg.enable_sfx:
+        if self.config.enable_music or self.config.enable_sfx:
             pygame.mixer.pre_init(44100, -16, 2, 2048)
         pygame.init()
         if icon_path is not None:
             pygame.display.set_icon(pygame.image.load(icon_path))
-        pygame.display.set_mode((320 * SCALE, 240 * SCALE), pygame.OPENGL | pygame.DOUBLEBUF)
+        pygame.display.set_mode((320 * self.config.scale, 240 * self.config.scale), pygame.OPENGL | pygame.DOUBLEBUF)
         pygame.display.set_caption(title)
 
     def play_bgm(self, path):
@@ -1326,9 +1330,8 @@ class Engine(object):
 
 
 if __name__ == '__main__':
-    config = EngineConfig('config.ini')
-    SCALE = config.scale
-    engine = Engine(config, title="Chimera Chimera", icon_path="images/icon.png")
+    engine = Engine(config_path='config.ini', title="Chimera Chimera", icon_path="images/icon.png")
+    SCALE = engine.config.scale
     sfx = Sounds()
     sfx.load()
     textures = Textures()
@@ -1336,5 +1339,3 @@ if __name__ == '__main__':
     engine.next_world = PuzzleWorld(['intro', '0', '1', '2', '3', '4', '5'])
     engine.play_bgm('music/just_nasty.ogg')
     engine.run()
-
-
