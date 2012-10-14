@@ -197,6 +197,8 @@ SPECIES_NAMES = {
     (SPECIES_EAGLE, SPECIES_EAGLE): 'EAGLE'
 }
 
+LEVEL_SEQUENCE = ['intro', '0', '1', '2', '3', '4', '5']
+
 
 def clamp(x, min, max):
     if min > max:
@@ -1080,11 +1082,10 @@ def draw_bg():
 
 
 class PuzzleWorld(World):
-    def __init__(self, levels):
+    def __init__(self, level_num):
         global bg_timer
-        assert len(levels) > 0
         super(PuzzleWorld, self).__init__()
-        self.levels = levels
+        self.level_num = level_num
         self.wild_animals = []
         self.water_particles = WaterParticles(self)
         self.dirt_particles = DirtSpray(self)
@@ -1095,7 +1096,7 @@ class PuzzleWorld(World):
         self._won = False
         self.label = Label('Vera.ttf', 10 * SCALE)
 
-        self.map = Map(self, self.levels[0])
+        self.map = Map(self, LEVEL_SEQUENCE[self.level_num])
         self.add(self.map)
 
         player = Animal(self)
@@ -1123,16 +1124,16 @@ class PuzzleWorld(World):
                 self.show_help = True
 
             if engine.key_pressed(pygame.K_r):
-                engine.next_world = PuzzleWorld(self.levels)
-            #if engine.key_pressed(pygame.K_w):
+                engine.next_world = PuzzleWorld(self.level_num)
+            # if engine.key_pressed(pygame.K_w):
             #   self.win()
             super(PuzzleWorld, self).update(delta)
 
             if self._won:
                 self.win_timer += delta
                 if self.win_timer > 2:
-                    if len(self.levels) > 1:
-                        engine.next_world = PuzzleWorld(self.levels[1:])
+                    if (self.level_num + 1) < len(LEVEL_SEQUENCE):
+                        engine.next_world = PuzzleWorld(self.level_num + 1)
                     else:
                         engine.next_world = WinWorld()
 
@@ -1336,6 +1337,6 @@ if __name__ == '__main__':
     sfx.load()
     textures = Textures()
     textures.load()
-    engine.next_world = PuzzleWorld(['intro', '0', '1', '2', '3', '4', '5'])
+    engine.next_world = PuzzleWorld(0)
     engine.play_bgm('music/just_nasty.ogg')
     engine.run()
