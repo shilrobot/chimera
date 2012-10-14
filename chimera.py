@@ -1,5 +1,8 @@
 import pygame
 from OpenGL.GL import *
+# PyOpenGL "go fast" button
+OpenGL.ERROR_CHECKING = False
+OpenGL.ERROR_LOGGING = False
 import math
 import time
 from xml.etree.ElementTree import parse
