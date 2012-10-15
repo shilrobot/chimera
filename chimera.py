@@ -1349,7 +1349,7 @@ if __name__ == '__main__':
     def get_main_dir():
         if main_is_frozen():
             return os.path.dirname(sys.executable)
-        return os.path.dirname(sys.argv[0])
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
 
     os.chdir(get_main_dir())
 
