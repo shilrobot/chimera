@@ -1212,7 +1212,7 @@ class EngineConfig(object):
                 self.scale = cfg.getint('graphics', 'scale')
                 if self.scale < 1:
                     self.scale = 1
-                
+
             if cfg.has_option('graphics', 'vsync'):
                 self.vsync = cfg.getboolean('graphics', 'vsync')
 
