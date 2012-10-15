@@ -1202,6 +1202,7 @@ class EngineConfig(object):
         self.scale = 3
         self.enable_sfx = True
         self.enable_music = True
+        self.vsync = True
 
         try:
             cfg = ConfigParser.ConfigParser()
@@ -1211,6 +1212,9 @@ class EngineConfig(object):
                 self.scale = cfg.getint('graphics', 'scale')
                 if self.scale < 1:
                     self.scale = 1
+                
+            if cfg.has_option('graphics', 'vsync'):
+                self.vsync = cfg.getboolean('graphics', 'vsync')
 
             if cfg.has_option('audio', 'sfx'):
                 self.enable_sfx = cfg.getboolean('audio', 'sfx')
@@ -1237,6 +1241,13 @@ class Engine(object):
         pygame.init()
         if icon_path is not None:
             pygame.display.set_icon(pygame.image.load(icon_path))
+
+        # NOTE: This must be done BEFORE set_mode or it has no effect
+        # Also, for some reason GL_SWAP_CONTROL isn't listed in the pygame docs,
+        # so I'm being careful here
+        if self.config.vsync and hasattr(pygame, 'GL_SWAP_CONTROL'):
+            pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, 1)
+
         pygame.display.set_mode((320 * self.config.scale, 240 * self.config.scale), pygame.OPENGL | pygame.DOUBLEBUF)
         pygame.display.set_caption(title)
 
