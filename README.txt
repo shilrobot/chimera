@@ -17,6 +17,7 @@ PyOpenGL: http://pyopengl.sourceforge.net/documentation/installation.html
 Tested combinations:
 Windows 7 x64, Python 2.7.3 (32-bit), pygame 1.9.1release, PyOpenGL 3.0.2b2
 Ubuntu 10.04 x64, Python 2.6.5, pygame 1.9.1release, PyOpenGL 3.0.0
+OS X 10.8 Mountain Lion, Python 2.7.3, pygame 1.9.1release, PyOpenGL 3.0.2
 
 HOW TO RUN
 ==========
@@ -42,22 +43,27 @@ LINUX:
 
 2) Run 'python chimera.py'. 
 
-MAC:
+MAC (last tested on Mountain Lion):
 
-1) Install pygame and pyopengl. (OS X comes with Python)
+1) Install python 2.7 for Mac from http://www.python.org.
+   Run the "Update Shell Profile.command" in Applications/Python2.7.
 
-2) You may be able to just do 'python chimera.py' at a terminal.
-   
-   If not, try this... (not tested since the switch to Pygame)
+2) Install pygame from http://www.pygame.org/download.shtml.
+
+   As of this writing, the appropriate package is:
+   http://pygame.org/ftp/pygame-1.9.1release-python.org-32bit-py2.7-macosx10.3.dmg
+   This is the 32-bit installer for python 2.7.
+
+3) Install PyOpenGL using pip or easy_install.
+
+4) If you are on Lion or Mountain Lion:
+
+     $ arch -i386 python chimera.py
 
    If you are on Snow Leopard, from a bash shell in the same directory
    as this README.txt file:
 
      $ VERSIONER_PYTHON_PREFER_32_BIT=yes python chimera.py
-
-   Otherwise, if you are on Lion:
-
-     $ arch -i386 /usr/bin/python2.6 chimera.py
 
    I have not tried earlier versions of OS X.
    
